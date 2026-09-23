@@ -26,6 +26,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           Quản lý danh mục
         </li>
+        <li :class="{ active: currentView === 'reviews' }" @click="currentView = 'reviews'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Quản lý đánh giá
+        </li>
       </ul>
     </div>
 
@@ -167,6 +171,7 @@
         <QuanLySanPham   v-else-if="currentView === 'products'" />
         <QuanLyDonHang   v-else-if="currentView === 'orders'" />
         <QuanLyDanhMuc   v-else-if="currentView === 'categories'" />
+        <QuanLyDanhGia   v-else-if="currentView === 'reviews'" />
         <QuanLyHoSo      v-else-if="currentView === 'profile'" />
       </div>
     </div>
@@ -183,6 +188,7 @@ import QuanLyNguoiDung from '@/components/admin/QuanLyNguoiDung.vue';
 import QuanLySanPham   from '@/components/admin/QuanLySanPham.vue';
 import QuanLyDonHang   from '@/components/admin/QuanLyDonHang.vue';
 import QuanLyDanhMuc   from '@/components/admin/QuanLyDanhMuc.vue';
+import QuanLyDanhGia   from '@/components/admin/QuanLyDanhGia.vue';
 import QuanLyHoSo      from '@/components/admin/QuanLyHoSo.vue';
 import { resetRouterState } from '@/router';
 
@@ -190,7 +196,7 @@ const PALETTE = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 
 export default {
   name: 'Dashboard',
-  components: { QuanLyNguoiDung, QuanLySanPham, QuanLyDonHang, QuanLyDanhMuc, QuanLyHoSo, ChatWidget },
+  components: { QuanLyNguoiDung, QuanLySanPham, QuanLyDonHang, QuanLyDanhMuc, QuanLyDanhGia, QuanLyHoSo, ChatWidget },
   data() {
     return {
       currentView: 'dashboard',
@@ -204,7 +210,7 @@ export default {
   },
   computed: {
     pageTitle() {
-      const map = { dashboard:'Tổng quan', users:'Quản lý người dùng', products:'Quản lý sản phẩm', orders:'Quản lý đơn hàng', categories:'Quản lý danh mục', profile:'Hồ sơ quản trị viên' };
+      const map = { dashboard:'Tổng quan', users:'Quản lý người dùng', products:'Quản lý sản phẩm', orders:'Quản lý đơn hàng', categories:'Quản lý danh mục', reviews:'Quản lý đánh giá', profile:'Hồ sơ quản trị viên' };
       return map[this.currentView] || 'Dashboard';
     },
     donutStyle() {
@@ -226,26 +232,23 @@ export default {
       this.statsLoading = true;
       try {
         const [usersRes, productsRes, ordersRes, catsRes] = await Promise.all([
-          // API đúng: GET /api/v1/admin/user
-          api.get('/api/v1/admin/user'),
-          // API đúng: GET /api/v1/admin/product/listproduct
-          api.get('/api/v1/admin/product/listproduct'),
-          // API đúng: GET /api/v1/admin/order/list
-          api.get('/api/v1/admin/order/list'),
-          // API đúng: GET /api/v1/admin/category/listcategory
+          api.get('/api/v1/admin/user', { params: { page: 1, size: 500 } }),
+          api.get('/api/v1/admin/product/listproduct', { params: { page: 1, size: 500 } }),
+          api.get('/api/v1/admin/order/list', { params: { page: 1, size: 500 } }),
           api.get('/api/v1/admin/category/listcategory')
         ]);
-        const users    = usersRes.data;
-        const products = productsRes.data;
-        const orders   = ordersRes.data;
-        const cats     = catsRes.data;
+        
+        const users    = usersRes.data.content || usersRes.data;
+        const products = productsRes.data.content || productsRes.data;
+        const orders   = ordersRes.data.content || ordersRes.data;
+        const cats     = catsRes.data.content || catsRes.data;
 
         this.stats = {
-          totalUsers:      users.length,
-          totalProducts:   products.length,
-          totalOrders:     orders.length,
+          totalUsers:      usersRes.data.totalElements || users.length,
+          totalProducts:   productsRes.data.totalElements || products.length,
+          totalOrders:     ordersRes.data.totalElements || orders.length,
           pendingOrders:   orders.filter(o => !o.trangThai || o.trangThai === 'Chờ duyệt').length,
-          totalCategories: cats.length
+          totalCategories: catsRes.data.totalElements || cats.length
         };
 
         // Order status donut

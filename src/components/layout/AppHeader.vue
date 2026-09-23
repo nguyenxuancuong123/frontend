@@ -7,6 +7,19 @@
             <router-link to="/DonHang">Đơn hàng</router-link>
             <router-link to="/Profile">Hồ sơ</router-link>
         </div>
+
+        <!-- Thanh tìm kiếm -->
+        <div class="search-bar-wrap">
+            <input
+                v-model="searchKeyword"
+                type="text"
+                class="search-input"
+                placeholder="Tìm kiếm sản phẩm..."
+                @keyup.enter="doSearch"
+            />
+            <button class="btn-search-text" @click="doSearch">Tìm kiếm</button>
+        </div>
+
         <div class="user-info">
             <span v-if="userName" class="greeting">
                 Xin chào, {{ userName }} 
@@ -23,7 +36,8 @@ export default {
     data() {
         return {
             userName: localStorage.getItem('user_name') || '',
-            isGuest: localStorage.getItem('is_guest') === 'true'
+            isGuest: localStorage.getItem('is_guest') === 'true',
+            searchKeyword: '',
         }
     },
     mounted() {
@@ -48,7 +62,12 @@ export default {
             // Phát sự kiện để Header tự cập nhật
             window.dispatchEvent(new Event('auth-changed'));
             window.location.href = '/Login';
-        }
+        },
+        doSearch() {
+            const kw = this.searchKeyword.trim();
+            if (!kw) return;
+            this.$router.push({ name: 'TimKiem', query: { keyword: kw } });
+        },
     }
 }
 </script>
@@ -65,6 +84,7 @@ export default {
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
 .nav-links a {
@@ -79,6 +99,48 @@ export default {
 .nav-links a:hover {
     background: #ddd;
     color: #333;
+}
+
+/* Thanh tìm kiếm */
+.search-bar-wrap {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 4px;
+    padding: 2px 2px 2px 12px;
+    gap: 6px;
+    flex: 0 1 350px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #333;
+    font-size: 14px;
+    width: 100%;
+}
+
+.search-input::placeholder {
+    color: #888;
+}
+
+.btn-search-text {
+    background-color: #f39c12;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    color: #fff;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.btn-search-text:hover {
+    background-color: #d68910;
 }
 
 .user-info {
@@ -115,4 +177,3 @@ export default {
     background-color: #2980b9 !important;
 }
 </style>
-

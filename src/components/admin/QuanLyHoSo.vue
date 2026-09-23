@@ -78,8 +78,8 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        // API đúng: GET /api/v1/user/ (lấy thông tin người dùng đang đăng nhập)
-        const res = await api.get('/api/v1/user/');
+        // API đúng: GET /api/v1/user (bỏ dấu gạch chéo cuối để tránh 404 trên Spring Boot 3)
+        const res = await api.get('/api/v1/user');
         this.profile = res.data;
       } catch (err) {
         this.error = err.response?.data?.message || 'Không tải được hồ sơ.';

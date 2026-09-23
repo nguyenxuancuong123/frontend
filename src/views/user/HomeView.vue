@@ -64,15 +64,19 @@
 
         <!-- Phân trang (Ẩn đi khi đang ở chế độ Tìm kiếm) -->
         <div class="pagination" v-if="!isSearching && totalPages > 0">
-            <button :disabled="currentPage === 1" @click="loadPage(currentPage - 1)">« Trước</button>
+            <button :disabled="currentPage === 1" @click="loadPage(1)">« Đầu</button>
+            <button :disabled="currentPage === 1" @click="loadPage(currentPage - 1)">‹ Trước</button>
+            
             <button
-                v-for="p in totalPages"
+                v-for="p in visiblePages"
                 :key="p"
                 :class="{ active: p === currentPage }"
                 @click="loadPage(p)">
                 {{ p }}
             </button>
-            <button :disabled="currentPage === totalPages" @click="loadPage(currentPage + 1)">Sau »</button>
+            
+            <button :disabled="currentPage === totalPages" @click="loadPage(currentPage + 1)">Sau ›</button>
+            <button :disabled="currentPage === totalPages" @click="loadPage(totalPages)">Cuối »</button>
             <span class="page-info">Trang {{ currentPage }} / {{ totalPages }} ({{ totalElements }} sản phẩm)</span>
         </div>
     </div>
@@ -111,6 +115,22 @@ export default {
         soChuaDoc() {
             return this.notiService.soThongBaoChuaDoc();
         },
+        visiblePages() {
+            let pages = [];
+            const maxVisible = 5;
+            let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+            let end = start + maxVisible - 1;
+
+            if (end > this.totalPages) {
+                end = this.totalPages;
+                start = Math.max(1, end - maxVisible + 1);
+            }
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            return pages;
+        }
     },
     async mounted() {
         await this.loadPage(1);

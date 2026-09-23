@@ -157,7 +157,7 @@ export default {
         async loadTuGioHang() {
             this.loading = true;
             try {
-                const result = await api.get('/api/v1/cart/');
+                const result = await api.get('/api/v1/cart');
                 this.orderItems = result.data.map(item => ({
                     maBienThe: item.maBienThe,
                     tenSP: item.tenSP,
@@ -206,8 +206,8 @@ export default {
 
             this.loading = true;
             try {
-                // API đúng: POST /api/v1/donhang/
-                const donHangResult = await api.post('/api/v1/donhang/', this.buildDonHangPayload());
+                // API đúng: POST /api/v1/order/
+                const donHangResult = await api.post('/api/v1/order', this.buildDonHangPayload());
                 const maDonHang = donHangResult.data?.maDonHang;
                 this.maDonHang = maDonHang;
 

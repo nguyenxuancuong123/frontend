@@ -46,6 +46,22 @@
       </table>
     </div>
 
+    <!-- Phân trang -->
+    <div class="pagination" v-if="totalPages > 0">
+        <button :disabled="currentPage === 1" @click="fetchData(1)">« Đầu</button>
+        <button :disabled="currentPage === 1" @click="fetchData(currentPage - 1)">‹ Trước</button>
+        <button
+            v-for="p in visiblePages"
+            :key="p"
+            :class="{ active: p === currentPage }"
+            @click="fetchData(p)">
+            {{ p }}
+        </button>
+        <button :disabled="currentPage === totalPages" @click="fetchData(currentPage + 1)">Sau ›</button>
+        <button :disabled="currentPage === totalPages" @click="fetchData(totalPages)">Cuối »</button>
+        <span class="page-info">Trang {{ currentPage }} / {{ totalPages }} ({{ totalElements }} sản phẩm)</span>
+    </div>
+
     <!-- Modal -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-box">
@@ -150,21 +166,50 @@ export default {
         soLuongTon: 0,
         moTa: '',
         maDM: ''
-      }
+      },
+      // Pagination state
+      currentPage: 1,
+      pageSize: 10,
+      totalPages: 0,
+      totalElements: 0
     };
   },
-  mounted() { this.fetchData(); },
+  computed: {
+    visiblePages() {
+      let pages = [];
+      const maxVisible = 5;
+      let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+      let end = start + maxVisible - 1;
+      if (end > this.totalPages) {
+        end = this.totalPages;
+        start = Math.max(1, end - maxVisible + 1);
+      }
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      return pages;
+    }
+  },
+  mounted() { this.fetchData(1); },
   methods: {
-    async fetchData() {
+    async fetchData(page = 1) {
+      if (page < 1 || (this.totalPages > 0 && page > this.totalPages)) return;
       this.loading = true;
       try {
         const [prodRes, catRes] = await Promise.all([
           // API đúng: GET /api/v1/admin/product/listproduct
-          api.get('/api/v1/admin/product/listproduct'),
+          api.get('/api/v1/admin/product/listproduct', {
+            params: { page: page, size: this.pageSize }
+          }),
           // API đúng: GET /api/v1/admin/category/listcategory
           api.get('/api/v1/admin/category/listcategory')
         ]);
-        this.products = prodRes.data;
+        
+        this.products = prodRes.data.content;
+        this.currentPage = page;
+        this.totalPages = prodRes.data.totalPages;
+        this.totalElements = prodRes.data.totalElements;
+
         this.categories = catRes.data;
       } catch { alert('Lỗi tải dữ liệu sản phẩm.'); }
       finally { this.loading = false; }
@@ -206,12 +251,13 @@ export default {
           giaKhuyenMai: product.giaKhuyenMai || '',
           soLuongTon: product.soLuongTon ?? product.soLuong ?? 0,
           moTa: product.moTa || '',
-          maDM: product.danhMuc?.maDM || ''
+          maDM: product.danhMuc?.maDM || '',
+          bienThes: product.bienThes || [] // Giữ lại biến thể
         };
         this.imagePreview = product.hinhAnh ? 'http://localhost:8080/images/' + product.hinhAnh : null;
       } else {
         this.isEdit = false;
-        this.formData = { maSP: null, tenSP: '', giaBan: '', giaKhuyenMai: '', soLuongTon: 0, moTa: '', maDM: '' };
+        this.formData = { maSP: null, tenSP: '', giaBan: '', giaKhuyenMai: '', soLuongTon: 0, moTa: '', maDM: '', bienThes: [] };
         this.imagePreview = null;
       }
       this.isModalOpen = true;
@@ -237,6 +283,11 @@ export default {
           danhMuc:       { maDM: this.formData.maDM }
         };
         
+        // Nếu đang update, gửi kèm mảng biến thể cũ để BE không xóa mất
+        if (this.isEdit && this.formData.bienThes && this.formData.bienThes.length > 0) {
+            productData.bienThes = this.formData.bienThes;
+        }
+
         if (this.imageFile) {
           formData.append("file", this.imageFile);
         }
@@ -326,5 +377,10 @@ export default {
 .spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .loading { display:flex; align-items:center; justify-content:center; height:120px; color:#94a3b8; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 20px; }
+.pagination button { min-width: 32px; padding: 6px 10px; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px; cursor: pointer; color: #334155; }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination button.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: bold; }
+.page-info { margin-left: 12px; font-size: 14px; color: #64748b; }
 </style>
 

@@ -63,7 +63,7 @@ export default {
         await this.checkOrderStatus();
     },
     methods: {
-        // API đúng: GET /api/v1/donhang/{madh}
+        // API đúng: GET /api/v1/order/{madh}
         async checkOrderStatus() {
             this.checking = true;
             if (this.maDonHang) {

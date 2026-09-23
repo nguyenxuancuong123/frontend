@@ -117,6 +117,21 @@
       </table>
     </div>
 
+    <!-- Phân trang -->
+    <div class="pagination" v-if="totalPages > 0">
+        <button :disabled="currentPage === 1" @click="fetchOrders(1)">« Đầu</button>
+        <button :disabled="currentPage === 1" @click="fetchOrders(currentPage - 1)">‹ Trước</button>
+        <button
+            v-for="p in visiblePages"
+            :key="p"
+            :class="{ active: p === currentPage }"
+            @click="fetchOrders(p)">
+            {{ p }}
+        </button>
+        <button :disabled="currentPage === totalPages" @click="fetchOrders(currentPage + 1)">Sau ›</button>
+        <button :disabled="currentPage === totalPages" @click="fetchOrders(totalPages)">Cuối »</button>
+        <span class="page-info">Trang {{ currentPage }} / {{ totalPages }} ({{ totalElements }} đơn hàng)</span>
+    </div>
     <!-- Toast lỗi thao tác -->
     <div v-if="actionError" class="toast-error">{{ actionError }}</div>
   </div>
@@ -138,7 +153,12 @@ export default {
       searchText: '',
       statusFilter: '',
       actionError: null,
-      statusOptions: STATUS_OPTIONS
+      statusOptions: STATUS_OPTIONS,
+      // Pagination state
+      currentPage: 1,
+      pageSize: 10,
+      totalPages: 0,
+      totalElements: 0
     };
   },
   computed: {
@@ -157,17 +177,37 @@ export default {
       return this.orders
         .filter(o => o.trangThai === 'Hoàn thành')
         .reduce((sum, o) => sum + (o.tongTien || 0), 0);
+    },
+    visiblePages() {
+      let pages = [];
+      const maxVisible = 5;
+      let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+      let end = start + maxVisible - 1;
+      if (end > this.totalPages) {
+        end = this.totalPages;
+        start = Math.max(1, end - maxVisible + 1);
+      }
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      return pages;
     }
   },
   mounted() {
-    this.fetchOrders();
+    this.fetchOrders(1);
   },
   methods: {
-    async fetchOrders() {
+    async fetchOrders(page = 1) {
+      if (page < 1 || (this.totalPages > 0 && page > this.totalPages)) return;
       this.loading = true;
       try {
-        const res = await api.get('/api/v1/admin/order/list');
-        this.orders = res.data.sort((a, b) => b.maDonHang - a.maDonHang);
+        const res = await api.get('/api/v1/admin/order/list', {
+          params: { page, size: this.pageSize }
+        });
+        this.orders = res.data.content;
+        this.currentPage = page;
+        this.totalPages = res.data.totalPages;
+        this.totalElements = res.data.totalElements;
       } catch (err) {
         this.showActionError(err, 'Không thể tải danh sách đơn hàng.');
       } finally {
@@ -351,4 +391,9 @@ export default {
   padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
   box-shadow: 0 10px 20px rgba(239, 68, 68, 0.25); z-index: 60;
 }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 20px; }
+.pagination button { min-width: 32px; padding: 6px 10px; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px; cursor: pointer; color: #334155; }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination button.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: bold; }
+.page-info { margin-left: 12px; font-size: 14px; color: #64748b; }
 </style>

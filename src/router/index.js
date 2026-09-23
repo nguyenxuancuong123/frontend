@@ -12,6 +12,7 @@ import ChiTietDonHangView from "@/views/user/ChiTietDonHangView.vue";
 import MoMoView from "@/views/user/MoMoView.vue";
 import DonHangView from "@/views/user/DonHangView.vue";
 import OAuth2RedirectView from "@/views/auth/OAuth2RedirectView.vue";
+import TimKiemView from "@/views/user/TimKiemView.vue";
 import { getRoleFromToken, getHomeRouteForRole } from '@/auth';
 
 import { createRouter, createWebHistory } from "vue-router";
@@ -21,7 +22,8 @@ const publicRoutes = [
     { name: "Login", component: LoginView, path: "/Login" },
     { name: "OAuth2Redirect", component: OAuth2RedirectView, path: "/oauth2/redirect" },
     // Nếu gõ sai URL hoặc vào trang không có quyền role
-    { path: '/:pathMatch(.*)*', redirect: '/Login' }
+    { path: '/admin', redirect: '/Dashboard' },
+    { path: '/:pathMatch(.*)*' }
 ];
  
 
@@ -91,6 +93,12 @@ const dynamicRoutes = [
         component: ProfileView, 
         path: "/Profile", 
         meta: { requiresAuth: true, roles: ['USER', 'ADMIN', 'EMPLOYEE'] } 
+    },
+    { 
+        name: "TimKiem", 
+        component: TimKiemView, 
+        path: "/TimKiem", 
+        meta: { requiresAuth: true, roles: ['USER'] } 
     }
 ];
 
