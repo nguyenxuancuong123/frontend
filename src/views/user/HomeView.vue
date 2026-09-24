@@ -77,7 +77,7 @@
             
             <button :disabled="currentPage === totalPages" @click="loadPage(currentPage + 1)">Sau ›</button>
             <button :disabled="currentPage === totalPages" @click="loadPage(totalPages)">Cuối »</button>
-            <span class="page-info">Trang {{ currentPage }} / {{ totalPages }} ({{ totalElements }} sản phẩm)</span>
+            <!-- <span class="page-info">Trang {{ currentPage }} / {{ totalPages }} ({{ totalElements }} sản phẩm)</span> -->
         </div>
     </div>
 
@@ -292,6 +292,16 @@ export default {
     margin-left: 12px;
     font-size: 14px;
     color: #555;
+}
+
+.badge-hethang {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 6px;
 }
 </style>
 

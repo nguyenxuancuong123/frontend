@@ -34,19 +34,21 @@
 
     <!-- Thanh phân trang (page 1-based, khớp với backend) -->
     <div class="pagination" v-if="totalPages > 0">
-        <button :disabled="currentPage === 1" @click="loadPage(currentPage - 1)">« Trước</button>
+        <button :disabled="currentPage === 1" @click="loadPage(1)">« Đầu</button>
+        <button :disabled="currentPage === 1" @click="loadPage(currentPage - 1)">‹ Trước</button>
 
         <button
-            v-for="p in totalPages"
+            v-for="p in visiblePages"
             :key="p"
             :class="{ active: p === currentPage }"
             @click="loadPage(p)">
             {{ p }}
         </button>
 
-        <button :disabled="currentPage === totalPages" @click="loadPage(currentPage + 1)">Sau »</button>
+        <button :disabled="currentPage === totalPages" @click="loadPage(currentPage + 1)">Sau ›</button>
+        <button :disabled="currentPage === totalPages" @click="loadPage(totalPages)">Cuối »</button>
 
-        <span class="page-info">Trang {{ currentPage }} / {{ totalPages }} ({{ totalElements }} sản phẩm)</span>
+        <!-- <span class="page-info">Trang {{ currentPage }} / {{ totalPages }} ({{ totalElements }} sản phẩm)</span> -->
     </div>
 </template>
 
@@ -69,6 +71,24 @@ export default {
             size: 10,
             totalPages: 0,
             totalElements: 0,
+        }
+    },
+    computed: {
+        visiblePages() {
+            let pages = [];
+            const maxVisible = 5;
+            let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+            let end = start + maxVisible - 1;
+
+            if (end > this.totalPages) {
+                end = this.totalPages;
+                start = Math.max(1, end - maxVisible + 1);
+            }
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            return pages;
         }
     },
     async mounted() { 
@@ -147,16 +167,12 @@ tr:first-child {
 
 .badge-hethang {
     position: absolute;
-    top: -6px;
-    left: -6px;
-    background: #dc2626;
+    top: 8px; right: 8px;
+    background: rgba(0,0,0,0.55);
     color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 4px;
-    white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 6px;
 }
 
 .pagination {
