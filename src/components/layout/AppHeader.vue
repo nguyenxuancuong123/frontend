@@ -1,0 +1,192 @@
+<template>
+    <div class="nav">
+        <div class="nav-links">
+            <router-link to="/">Home</router-link>
+            <router-link to="/DanhMuc">Danh mục</router-link>
+            <router-link to="/GioHang">Giỏ hàng</router-link>
+            <router-link to="/DonHang">Đơn hàng</router-link>
+            <router-link to="/Profile">Hồ sơ</router-link>
+        </div>
+
+        <!-- Thanh tìm kiếm -->
+        <div class="search-bar-wrap">
+            <input
+                v-model="searchKeyword"
+                type="text"
+                class="search-input"
+                placeholder="Tìm kiếm sản phẩm..."
+                @keyup.enter="doSearch"
+            />
+            <button class="btn-search-text" @click="doSearch">Tìm kiếm</button>
+        </div>
+
+        <div class="user-info">
+            <span v-if="userName" class="greeting">
+                Xin chào, {{ userName }} 
+                <span v-if="isGuest" class="badge">Khách vãng lai</span>
+            </span>
+            <router-link v-if="isGuest" to="/Login" class="btn-login">Đăng nhập / Đăng ký</router-link>
+        </div>
+    </div>
+</template>
+
+<script>
+import api from '@/axios';
+
+export default {
+    name: 'AppHeader',
+    data() {
+        return {
+            userName: localStorage.getItem('user_name') || '',
+            isGuest: localStorage.getItem('is_guest') === 'true',
+            searchKeyword: '',
+        }
+    },
+    mounted() {
+        window.addEventListener('storage', this.syncUserData);
+        // Lắng nghe sự kiện custom nếu được emit trong cùng 1 tab
+        window.addEventListener('auth-changed', this.syncUserData);
+    },
+    beforeUnmount() {
+        window.removeEventListener('storage', this.syncUserData);
+        window.removeEventListener('auth-changed', this.syncUserData);
+    },
+    methods: {
+        syncUserData() {
+            this.userName = localStorage.getItem('user_name') || '';
+            this.isGuest = localStorage.getItem('is_guest') === 'true';
+        },
+        async logout() {
+            try {
+                const accessToken  = localStorage.getItem('jwt-token');
+                const refreshToken = localStorage.getItem('refresh-token');
+                // Gọi API logout để BE blacklist cả Access Token lẫn Refresh Token
+                await api.post('/v1/auth/logout', null, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'X-Refresh-Token': refreshToken,
+                    }
+                });
+            } catch (_) { /* Bỏ qua lỗi mạng, vẫn logout phía client */ }
+            localStorage.removeItem('jwt-token');
+            localStorage.removeItem('refresh-token');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('is_guest');
+            // Phát sự kiện để Header tự cập nhật
+            window.dispatchEvent(new Event('auth-changed'));
+            window.location.href = '/Login';
+        },
+        doSearch() {
+            const kw = this.searchKeyword.trim();
+            if (!kw) return;
+            this.$router.push({ name: 'TimKiem', query: { keyword: kw } });
+        },
+    }
+}
+</script>
+
+<style scoped>
+.nav {
+    background-color: #333;
+    overflow: hidden;
+    position: fixed;   
+    top: 0;            
+    left: 0;           
+    width: 100%;       
+    z-index: 1000;     
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-links a {
+    float: left;
+    color: #f2f2f2;
+    padding: 14px 20px;
+    text-align: center;
+    font-size: 17px;
+    text-decoration: none;
+}
+
+.nav-links a:hover {
+    background: #ddd;
+    color: #333;
+}
+
+/* Thanh tìm kiếm */
+.search-bar-wrap {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 4px;
+    padding: 2px 2px 2px 12px;
+    gap: 6px;
+    flex: 0 1 350px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #333;
+    font-size: 14px;
+    width: 100%;
+}
+
+.search-input::placeholder {
+    color: #888;
+}
+
+.btn-search-text {
+    background-color: #f39c12;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    color: #fff;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.btn-search-text:hover {
+    background-color: #d68910;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    padding-right: 20px;
+}
+
+.greeting {
+    color: white;
+    margin-right: 15px;
+    font-size: 15px;
+}
+
+.badge {
+    background-color: #f39c12;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.btn-login, .btn-logout {
+    background-color: #3498db;
+    color: white !important;
+    padding: 8px 15px !important;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px !important;
+}
+
+.btn-login:hover, .btn-logout:hover {
+    background-color: #2980b9 !important;
+}
+</style>
